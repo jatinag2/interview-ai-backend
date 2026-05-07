@@ -79,8 +79,6 @@ async function generationpdffromhtml(htmlcontent){
   await browser.close();
   return pdfBuffer;
 }
-
-
 async function generateInterviewReport({
   resume,
   selfdescribe,
@@ -91,36 +89,21 @@ async function generateInterviewReport({
   });
 
   // ================= PROMPTS =================
-
-  const technicalPrompt = `
-Return ONLY JSON:
-{ "technicalQuestion": [ { "question": "", "intention": "", "answer": "" } ] }
-
-Resume:
-${resume}
-
-Job:
-${jobdescribe}
-`;
-
-  const behaviouralPrompt = `
-Return ONLY JSON:
-{ "behaviouralQuestion": [ { "question": "", "intention": "", "answer": "" } ] }
-
-Self:
-${selfdescribe}
-`;
-
+const technicalPrompt = `
+    Return ONLY JSON:
+    { "technicalQuestion": [ { "question": "", "intention": "", "answer": "" } ] }
+    Resume:${resume}
+    Job:${jobdescribe}
+   `;
+  const behaviouralPrompt = `Return ONLY JSON:
+     { "behaviouralQuestion": [ { "question": "", "intention": "", "answer": "" } ] }
+    Self:${selfdescribe}`;
   const skillPrompt = `
-Return ONLY JSON:
-{ "skillGaps": [ { "skill": "", "severity": "low|medium|high" } ] }
-
-Resume:
-${resume}
-Job:
-${jobdescribe}
+    Return ONLY JSON:
+   { "skillGaps": [ { "skill": "", "severity": "low|medium|high" } ] }
+Resume:${resume}
+Job:${jobdescribe}
 `;
-
   const prepPrompt = `
 Return ONLY JSON:
 { "preparationPlans": [ { "day": number, "focus": string, "tasks": [string] } ] }

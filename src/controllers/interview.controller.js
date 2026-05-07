@@ -4,52 +4,53 @@ import interviewReportModel from '../models/Interview.model.js'
 import { createRequire } from "module"; 
 
 const require = createRequire(import.meta.url);
-
-
-
 const pdfparse = require("pdf-parse");
   
-
-async function getinterviewreport(req,res) {
-    
+async function getinterviewreport(req,res) {  
     console.log(typeof pdfparse);
     try {
-
-    const {selfdescribe,jobdescribe}=req.body
-  console.log("Received selfdescribe:", selfdescribe);
-
-
-  console.log("Received jobdescribe:", jobdescribe);
+      const {selfdescribe,jobdescribe}=req.body
+      console.log("Received selfdescribe:", selfdescribe);
+      console.log("Received jobdescribe:", jobdescribe);
     if (!req.file) {
-  return res.status(400).json({
-    message: "Resume file is required",
-  });
-}
-if (!req.file?.buffer) {
-  return res.status(400).json({ message: "Invalid file upload" });
-}
+      return res.status(400).json({
+        message: "Resume file is required",
+      });
+    }
+    if (!req.file?.buffer) {
+      return res.status(400).json({ message: "Invalid file upload" });
+   }
     const resumecontext=await pdfparse(req.file.buffer)
+    const existingReport = await interviewReportModel.findOne({
+        user: req.user.id,
+        jobDescription: jobdescribe,
+        resume: resumecontext.text,
+        selfDescription: selfdescribe
+    });
 
+    if (existingReport) {
+        return res.status(200).json({
+            message: "interview report retrieved from cache successfully",
+            interviewReport: existingReport
+        });
+    }
     const interviewreport=await generateInterviewReport({
         resume:resumecontext.text,
-        
-  selfdescribe: selfdescribe,   
-  jobdescribe: jobdescribe, 
+        selfdescribe: selfdescribe,   
+        jobdescribe: jobdescribe, 
     })
-  
-     const interviewresult=await interviewReportModel.create({
+    const interviewresult=await interviewReportModel.create({
         resume:resumecontext.text,
-         selfDescription: selfdescribe,   // ✅ FIXED
-  jobDescription: jobdescribe,   
+        selfDescription: selfdescribe,   // ✅ FIXED
+        jobDescription: jobdescribe,   
         matchScore:interviewreport.matchScore,
         technicalQuestion:interviewreport.technicalQuestion,
         behaviouralQuestion:interviewreport.behaviouralQuestion,    
         skillGaps:interviewreport.skillGaps,
-       preparationPlans: interviewreport.preparationPlans || [],
+        preparationPlans: interviewreport.preparationPlans || [],
         user:req.user.id
      })
-
-     res.status(200).json({
+    res.status(200).json({
         message:"interview report generated successfully",
         interviewReport:interviewresult
      })
@@ -107,11 +108,11 @@ async function generateresumepdf(req,res) {
         })
     }
     const {resume,selfdescribe,jobdescribe}=report
-    const pdfBuffer=await generateResumePdf({ resume, selfdescribe, jobdescribe })
-    res.set({
-        'Content-Type':'application/pdf',
-   'Content-Disposition': `attachment; filename=resume_${reportId}.pdf`
+  const generatedHtml = await generateResumePdf({ resume, selfdescribe, jobdescribe })
+    
+    res.status(200).json({
+        html: generatedHtml
     })
-    res.send(pdfBuffer)
+   
 }
 export  {getinterviewreport,getinterviewreportwithid,allreport,generateresumepdf}

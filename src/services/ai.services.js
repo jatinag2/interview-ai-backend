@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { json, z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import puppeteer from "puppeteer";
+
 // ==========import======= SCHEMAS =================
 
 const interviewreportschematech = z.object({
@@ -65,20 +65,7 @@ async function safeAI(callFn, fallback) {
   }
 }
 
-// ================= MAIN FUNCTION =================
-async function generationpdffromhtml(htmlcontent){ 
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.setContent(htmlcontent,{waitUntil:"networkidle0"});
-  const pdfBuffer = await page.pdf({format: 'A4',margin:{
-      top: "20mm",
-            bottom: "20mm",
-            left: "15mm",
-            right: "15mm"
-  }});
-  await browser.close();
-  return pdfBuffer;
-}
+
 async function generateInterviewReport({
   resume,
   selfdescribe,
@@ -229,9 +216,8 @@ async function generateResumePdf({  resume,
 
     const jsonContent = JSON.parse(response.text)
 
-    const pdfBuffer = await generationpdffromhtml(jsonContent.html)
-
-    return pdfBuffer
+    // Return the raw HTML string instead of processing it via Puppeteer
+    return jsonContent.html
 
 }
 
